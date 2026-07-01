@@ -3,12 +3,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Link2, Eye, EyeOff, Loader2 } from 'lucide-react'
-import { PasswordStrength } from '@/components/PasswordStrength'
-import { useAuth } from '@/hooks/useAuth'
-
 export default function RegisterPage() {
   const router = useRouter()
-  const { setAuth } = useAuth()
   const [form, setForm] = useState({ name: '', email: '', username: '', password: '' })
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -26,8 +22,8 @@ export default function RegisterPage() {
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Registration failed'); return }
-      setAuth(data.token, data.user)
-      router.push('/onboarding')
+      // Redirect to email verification page
+      router.push(`/verify-email?userId=${data.userId}&email=${encodeURIComponent(data.email)}`)
     } catch {
       setError('Network error. Please try again.')
     } finally {
@@ -67,7 +63,7 @@ export default function RegisterPage() {
                 type="text"
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="Goku"
+                placeholder="Ankit Sharma"
                 required
                 className="w-full px-4 py-3 rounded-xl bg-secondary/60 border border-border/60 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
               />
@@ -114,7 +110,6 @@ export default function RegisterPage() {
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <PasswordStrength password={form.password} />
             </div>
             <button
               type="submit"
