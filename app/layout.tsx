@@ -5,8 +5,6 @@ import { Analytics } from "@vercel/analytics/next";
 import { AgentationGuard } from "@/components/AgentationGuard";
 import { HappySeedsWatermark } from "@/components/HappySeedsWatermark";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { ToastProvider } from "@/components/Toast";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./globals.css";
 import jsonMetadata from "../metadata.json";
 
@@ -43,11 +41,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-          <ToastProvider>
-            <ErrorBoundary>
-              {children}
-            </ErrorBoundary>
-          </ToastProvider>
+          {children}
         </ThemeProvider>
         <HappySeedsWatermark />
         <AgentationGuard />
