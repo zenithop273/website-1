@@ -45,6 +45,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
+    if (!user.emailVerified) {
+      await recordLog(user.id, req, false, 'email_unverified')
+      return NextResponse.json({
+        error: 'Please verify your email before logging in.',
+        unverified: true,
+        userId: user.id,
+        email: user.email,
+      }, { status: 403 })
+    }
+
     if (user.isBanned) {
       await recordLog(user.id, req, false, 'account_banned')
       return NextResponse.json({ error: 'Your account has been suspended.' }, { status: 403 })
