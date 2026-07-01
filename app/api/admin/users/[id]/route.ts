@@ -1,38 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db, users } from '@/db'
 import { requireAdmin } from '@/lib/adminAuth'
+import { db, users } from '@/db'
 import { eq } from 'drizzle-orm'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params
-    const auth = await requireAdmin(req)
-    if ('error' in auth) return auth.error
+  const check = await requireAdmin(req)
+  if ('error' in check) return check.error
 
-    const body = await req.json()
-    const updateData: Record<string, unknown> = { updatedAt: new Date() }
-    if (body.isBanned !== undefined) updateData.isBanned = body.isBanned
-    if (body.isAdmin !== undefined) updateData.isAdmin = body.isAdmin
+  const { id } = await params
+  const body = await req.json() as { isBanned?: boolean; isAdmin?: boolean }
 
-    const [updated] = await db.update(users).set(updateData).where(eq(users.id, id)).returning()
-    if (!updated) return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    return NextResponse.json(updated)
-  } catch (error) {
-    console.error('Admin user PATCH error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
+  const updates: Record<string, unknown> = { updatedAt: new Date() }
+  if (body.isBanned !== undefined) updates.isBanned = body.isBanned
+  if (body.isAdmin !== undefined) updates.isAdmin = body.isAdmin
+
+  const [updated] = await db.update(users).set(updates).where(eq(users.id, id)).returning()
+  if (!updated) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+  return NextResponse.json({ success: true, user: { id: updated.id, isBanned: updated.isBanned, isAdmin: updated.isAdmin } })
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params
-    const auth = await requireAdmin(req)
-    if ('error' in auth) return auth.error
+  const check = await requireAdmin(req)
+  if ('error' in check) return check.error
 
-    await db.delete(users).where(eq(users.id, id))
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Admin user DELETE error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
+  const { id } = await params
+  // Prevent self-delete
+  if (id === check.user.id) return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 })
+
+  await db.delete(users).where(eq(users.id, id))
+  return NextResponse.json({ success: true })
 }
